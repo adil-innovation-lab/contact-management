@@ -6,6 +6,9 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
+// Init Middleware
+app.use(express.json({ extended: false }))
+
 app.get('/', (req, res) => res.json({ msg: 'Welcome to the Contact Manager API' }) );
 
 // Define Routes here
