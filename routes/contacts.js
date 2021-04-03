@@ -57,15 +57,68 @@ router.post('/', [ auth, [
 // @route   PUT api/contacts/:id
 // @desc    Update a contact
 // @access  Private
-router.put('/:id', (req, res) => {
-    res.send('Update the contact')
+router.put('/:id', auth, async (req, res) => {
+
+    const { name, email, phone, type } = req.body;
+
+    const contactFields = { };
+
+    if(name) contactFields.name = name;
+    if(email) contactFields.email = email;
+    if(phone) contactFields.phone = phone;
+    if(type) contactFields.type = type;
+
+    try {
+        let contact = await Contact.findById(req.params.id);
+
+        // Check if the contact exists
+        if(!contact) return res.status(404).json({ msg: 'This contact does not exist.' })
+
+        // If the contact exists, then make sure the currently signed in user owns the contact
+        if(contact.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'You do not have the correct authorization to update this contact.' })
+        }
+
+        // Update contact if above conditions pass
+        contact = await Contact.findByIdAndUpdate(req.params.id,
+            { $set: contactFields },
+            { new: true }
+            );
+        
+        // Return the updated contact
+        res.json(contact);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
 // @route   DELETE api/contacts/:id
 // @desc    Delete a contact
 // @access  Private
-router.delete('/:id', (req, res) => {
-    res.send('Delete the contact')
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        let contact = await Contact.findById(req.params.id);
+
+        // Check if the contact exists
+        if(!contact) return res.status(404).json({ msg: 'This contact does not exist.' })
+
+        // If the contact exists, then make sure the currently signed in user owns the contact
+        if(contact.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'You do not have the correct authorization to update this contact.' })
+        }
+
+        // Find and remove the contact from MongoDB
+        await Contact.findByIdAndRemove(req.params.id);
+        
+        // Return a confirmation message
+        res.json({ msg: 'This contact has been removed.' });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
 module.exports = router;
