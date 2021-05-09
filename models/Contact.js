@@ -17,7 +17,7 @@ const ContactSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    relationship: {
+    type: {
         type: String,
         default: 'Personal'
     },
